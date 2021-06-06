@@ -5,6 +5,7 @@ import re
 import shlex
 import subprocess
 import tempfile
+import sys
 
 
 # Turning off automatic black formatting for this script as it breaks quotes.
@@ -95,4 +96,8 @@ def startx(display=0):
 
 
 if __name__ == "__main__":
-    startx()
+    display = 0
+    if len(sys.argv) > 1:
+        display = int(sys.argv[1])
+    print("Starting X on DISPLAY=:%s" % display)
+    startx(display)
