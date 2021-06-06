@@ -514,3 +514,148 @@ class SemanticMapTHORSensor(Sensor[RoboThorEnvironment, Task[RoboThorEnvironment
                 k: map_dict[k] > 0.001 if map_dict[k].dtype != np.bool else map_dict[k]
                 for k in self.observation_space.spaces.keys()
             }
+            
+# class GestureSensor(Sensor):
+#     """
+#     Sensors for gestures displayed in the scene.
+#     """
+#     def __init__(
+#         self,
+#         room_types: Sequence[str],
+#         object_types: Sequence[str],
+#         instruction_tokens: Sequence[str],
+#         max_instruction_len: int,
+#         uuid: str = "gestures",
+#         **kwargs: Any
+#     ):
+#         self.room_types = room_types
+#         self.object_types = object_types
+#         self.instruction_tokens = instruction_tokens
+#         self.room_type_to_ind = {
+#                 ot: i for i, ot in enumerate(self.room_types)
+#             }
+#         self.object_type_to_ind = {
+#                 ot: i for i, ot in enumerate(self.object_types)
+#             }
+#         self.token_to_ind = {
+#                 ot: i+1 for i, ot in enumerate(self.instruction_tokens)
+#             }
+#         self.max_instruction_len = max_instruction_len
+        
+#         assert max_instruction_len>0, "You must specify a positive integer as the maximum instruction length"
+        
+#         observation_space = self._get_observation_space()
+        
+#         super().__init__(**prepare_locals_for_super(locals()))
+#         return
+    
+#     def _get_observation_space(self):
+#         return gym.spaces.Box(low=-1.0, high=1.0, shape=(100,95))
+
+#     # generate points in latent space as input for the generator
+#     @staticmethod
+#     def generate_latent_points(latent_dim, n_samples):
+#         # generate points in the latent space
+#         z_input = np.random.randn(latent_dim * n_samples)
+#         z_input = z_input.reshape(n_samples, latent_dim)
+#         return z_input
+
+#     def get_observation(
+#         self,
+#         env: IThorEnvironment,
+#         task: Optional[ObjectNaviThorGridTask],
+#         *args: Any,
+#         **kwargs: Any
+#     ) -> np.ndarray:
+#         room_ind = np.expand_dims(np.array(self.room_type_to_ind[task.task_info["sceneType"]]), axis=0) # get the room type index
+#         object_ind =  np.expand_dims(np.array(self.object_type_to_ind[task.task_info["target_type"]]), axis=0) # get the object type index
+        
+#         # fill instruction with start/end token and empty strings
+#         instruction = task.task_info["instruction"].split(' ')
+#         instruction.insert(0, "<start>")
+#         instruction.append("<end>")
+#         while len(instruction) < self.max_instruction_len:
+#              instruction.append(' ')
+             
+#         token_ind = np.expand_dims(np.array([self.token_to_ind[token] for token in instruction]),axis=0) # get the instruction token indices
+#         human_pos = np.expand_dims(np.array(list(task.task_info["human_position"].values())), axis=0) # get the human position
+#         human_rot = np.expand_dims(np.array([task.task_info["human_rotation"]]), axis=0) # get the human rotation
+#         target_pos = np.expand_dims(np.array(list(task.task_info["target_position"].values())), axis=0) # get the target position
+#         target2human_pos = target_pos - human_pos # get the relative position of the target (to human)
+#         pose = np.concatenate((human_pos, human_rot, target_pos, target2human_pos), axis=-1)
+        
+#         img = np.expand_dims(cv2.resize(env.current_frame.copy(), dsize=(224,224)), axis=0)
+        
+#         # Load the pretrained gesture generation model
+#         latent_vector = GestureSensor.generate_latent_points(latent_dim=32, n_samples=1)
+#         model = tf.keras.models.load_model("cvae_decoder.h5", compile=False)
+#         gesture_prediction = model.predict([latent_vector, [room_ind, object_ind, pose, token_ind, img]])
+        
+#         # return a 100x95 gesture sequence
+#         return gesture_prediction
+
+class GestureDatasetSensor(Sensor):
+    """
+    Get the gesture observation from the dataset
+    """
+    
+    def __init__(
+        self,
+        uuid: str = "gestures",
+        **kwargs: Any
+    ):  
+        observation_space = self._get_observation_space()
+        
+        super().__init__(**prepare_locals_for_super(locals()))
+        return
+    
+    def _get_observation_space(self):
+        return gym.spaces.Box(low=-1.0, high=1.0, shape=(100,95))
+    
+    def get_observation(
+        self,
+        env: IThorEnvironment,
+        task: Optional[ObjectNaviThorGridTask],
+        *args: Any,
+        **kwargs: Any
+    ) -> np.ndarray:
+        
+        # First, check the stage
+        stage = task.task_info["stage"]
+        assert stage in ["train", "val", "test"], "Please make sure you put dataset under directory of train, val, and test"
+        
+        if stage == "train":
+            # return task.task_info["motion_recorded"]
+            return task.task_info["motion_recorded"]
+        else:
+            return task.task_info["motion_recorded"]
+        
+class HumanPoseSensor(Sensor):
+    """
+    Get the human pose (x, y, z, orientation)
+    """
+    
+    def __init__(
+        self,
+        uuid: str = "human_poses",
+        **kwargs: Any
+    ):  
+        observation_space = self._get_observation_space()
+        
+        super().__init__(**prepare_locals_for_super(locals()))
+        return
+    
+    def _get_observation_space(self):
+        return gym.spaces.Box(low=-1.0, high=1.0, shape=(4,))
+    
+    def get_observation(
+        self,
+        env: IThorEnvironment,
+        task: Optional[ObjectNaviThorGridTask],
+        *args: Any,
+        **kwargs: Any
+    ) -> np.ndarray:
+        
+        # Get the human position of the current episode
+        human_pose = np.array(list(map(lambda x:x/10.0, task.task_info["human_position"].values())) + [task.task_info["human_rotation"]])
+        return human_pose
