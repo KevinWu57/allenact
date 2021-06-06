@@ -1104,3 +1104,88 @@ class NavToPartnerTaskSampler(TaskSampler):
         self.seed = seed
         if seed is not None:
             set_seed(seed)
+            
+class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
+    def next_task(self, force_advance_scene: bool = False) -> Optional[ObjectGestureNavTask]:
+        if self.max_tasks is not None and self.max_tasks <= 0:
+            return None
+
+        if self.episode_index >= len(self.episodes[self.scenes[self.scene_index]]):
+            self.scene_index = (self.scene_index + 1) % len(self.scenes)
+            # shuffle the new list of episodes to train on
+            random.shuffle(self.episodes[self.scenes[self.scene_index]])
+            self.episode_index = 0
+        scene = self.scenes[self.scene_index]
+        episode = self.episodes[scene][self.episode_index]
+        if self.env is None:
+            self.env = self._create_environment()
+
+        if scene.replace("_physics", "") != self.env.scene_name.replace("_physics", ""):
+            self.env.reset(scene_name=scene)
+        else:
+            self.env.reset_object_filter()
+
+        self.env.set_object_filter(
+            object_ids=[
+                o["objectId"]
+                for o in self.env.last_event.metadata["objects"]
+                if o["objectType"] == episode["object_type"]
+            ]
+        )
+
+        task_info = {"scene": scene, "object_type": episode["object_type"]}
+        if len(task_info) == 0:
+            get_logger().warning(
+                "Scene {} does not contain any"
+                " objects of any of the types {}.".format(scene, self.object_types)
+            )
+        task_info["initial_position"] = episode["initial_position"]
+        task_info["initial_orientation"] = episode["initial_orientation"]
+        task_info["initial_horizon"] = episode.get("initial_horizon", 0)
+        task_info["distance_to_target"] = episode.get("shortest_path_length")
+        task_info["path_to_target"] = episode.get("shortest_path")
+        task_info["object_type"] = episode["object_type"]
+        task_info["target_type"] = episode["targetType"]
+        task_info["id"] = episode["id"]
+        
+        task_info["sceneType"] = episode["sceneType"]
+        task_info["instruction"] = episode["instruction"]
+        task_info["human_position"] = episode["humanPos"]
+        task_info["human_rotation"] = episode["humanRot"]
+        task_info["target_position"] = episode["targetPos"]
+        
+        # check stage: train, val, or test
+        task_info["stage"] = self.scene_directory.split('/')[-1] if self.scene_directory[-1] != "/" else self.scene_directory.split('/')[-2]
+        
+        # paths of recorded motions and predictions
+        task_info["motion_recorded_path"] = "/".join([self.scene_directory, episode["motion"]]) if self.scene_directory[-1] != "/" else "".join([self.scene_directory, episode["motion"]])
+        episode["motion_prediction"] = "predictions/" + episode["motion"].split('/')[1].split('.')[0] + f"_prediction_{random.randint(0,9)}.csv"
+        task_info["motion_predicted_path"] = "/".join([self.scene_directory, episode["motion_prediction"]]) if self.scene_directory[-1] != "/" else "".join([self.scene_directory, episode["motion_prediction"]])
+        
+        # get the recorded and predicted motion data
+        task_info["motion_recorded"] = np.genfromtxt(task_info["motion_recorded_path"], dtype="float", delimiter=";", skip_header=1)
+        task_info["motion_predicted"] = np.genfromtxt(task_info["motion_predicted_path"], dtype="float", delimiter=";", skip_header=1)
+        
+        if self.allow_flipping and random.random() > 0.5:
+            task_info["mirrored"] = True
+        else:
+            task_info["mirrored"] = False
+
+        self.episode_index += 1
+        if self.max_tasks is not None:
+            self.max_tasks -= 1
+        if not self.env.teleport(
+            pose=episode["initial_position"],
+            rotation=episode["initial_orientation"],
+            horizon=episode.get("initial_horizon", 0),
+        ):
+            return self.next_task()
+        self._last_sampled_task = ObjectGestureNavTask(
+            env=self.env,
+            sensors=self.sensors,
+            task_info=task_info,
+            max_steps=self.max_steps,
+            action_space=self._action_space,
+            reward_configs=self.rewards_config,
+        )
+        return self._last_sampled_task
