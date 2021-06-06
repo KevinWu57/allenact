@@ -5,6 +5,7 @@ import random
 from typing import List, Optional, Union, Dict, Any, cast, Tuple
 
 import gym
+import numpy as np
 
 from allenact.base_abstractions.sensor import Sensor
 from allenact.base_abstractions.task import TaskSampler
@@ -14,6 +15,7 @@ from allenact.utils.system import get_logger
 from allenact_plugins.robothor_plugin.robothor_environment import RoboThorEnvironment
 from allenact_plugins.robothor_plugin.robothor_tasks import (
     ObjectNavTask,
+    ObjectGestureNavTask,
     PointNavTask,
     NavToPartnerTask,
 )
