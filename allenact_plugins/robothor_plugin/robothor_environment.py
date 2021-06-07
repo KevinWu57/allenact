@@ -249,10 +249,11 @@ class RoboThorEnvironment:
                 else:
                     break
             if d < 0:
-                get_logger().warning(
-                    f"In scene {self.scene_name}, could not find a path from {position} to {target}"
-                    f" with {allowed_error} error tolerance. Returning a distance of -1."
-                )
+                # get_logger().warning(
+                #     f"In scene {self.scene_name}, could not find a path from {position} to {target}"
+                #     f" with {allowed_error} error tolerance. Returning a distance of -1."
+                # )
+                d = 0.25
             elif debug_log != "":
                 get_logger().debug(debug_log)
             return d
