@@ -70,7 +70,7 @@ class PointNavTask(Task[RoboThorEnvironment]):
         self.travelled_distance = 0.0
 
         self.task_info["followed_path"] = [self.env.agent_state()]
-        self.task_info["action_names"] = self.action_names()
+        self.task_info["action_names"] = self.class_action_names()
 
     @property
     def action_space(self):
@@ -592,7 +592,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
 
         self.task_info["followed_path"] = [self.env.agent_state()]
         self.task_info["taken_actions"] = []
-        self.task_info["action_names"] = self.action_names()
+        self.task_info["action_names"] = self.class_action_names()
 
         if self._all_metadata_available:
             self.last_geodesic_distance = self.env.distance_to_point(
@@ -621,7 +621,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
         assert isinstance(action, int)
         action = cast(int, action)
 
-        action_str = self.action_names()[action]
+        action_str = self.class_action_names()[action]
 
         if self.mirror:
             if action_str == ROTATE_RIGHT:
@@ -794,7 +794,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
                         elif expert_action == "RotateRight":
                             expert_action = "RotateLeft"
 
-                    return self.action_names().index(expert_action), True
+                    return self.class_action_names().index(expert_action), True
                 else:
                     # This should have been caught by self._is_goal_in_range()...
                     return 0, False
