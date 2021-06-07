@@ -669,8 +669,11 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
         return frame
 
     def _is_goal_in_range(self) -> bool:
+        """
+        We need to see the specific object, not just the same target object type
+        """
         return any(
-            o["objectType"] == self.task_info["object_type"]
+            o["objectId"] == self.task_info["objectId"]
             for o in self.env.visible_objects()
         )
 
