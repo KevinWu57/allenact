@@ -595,8 +595,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
         self.task_info["action_names"] = self.class_action_names()
 
         if self._all_metadata_available:
-            self.last_geodesic_distance = self.env.distance_from_point_to_point(
-                self.task_info["initial_position"],
+            self.last_geodesic_distance = self.env.distance_to_point(
                 self.task_info["target_position"],
             )
             self.optimal_distance = self.last_geodesic_distance
