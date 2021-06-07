@@ -602,8 +602,11 @@ class GestureDatasetSensor(Sensor):
     def __init__(
         self,
         uuid: str = "gestures",
+        recording_percentage: float = 1.0,
         **kwargs: Any
     ):  
+        self.recording_percentage = recording_percentage
+        
         observation_space = self._get_observation_space()
         
         super().__init__(**prepare_locals_for_super(locals()))
@@ -624,9 +627,17 @@ class GestureDatasetSensor(Sensor):
         stage = task.task_info["stage"]
         assert stage in ["train", "val", "test"], "Please make sure you put dataset under directory of train, val, and test"
         
+        rec_pred = [task.task_info["motion_recorded"], task.task_info["motion_predicted"]]
         if stage == "train":
-            # return task.task_info["motion_recorded"]
-            return task.task_info["motion_recorded"]
+            print(self.recording_percentage)
+            print(np.random.choice(
+                a=2,
+                p=[self.recording_percentage, 1.0-self.recording_percentage]
+            ))
+            return rec_pred[np.random.choice(
+                a=2,
+                p=[self.recording_percentage, 1.0-self.recording_percentage]
+            )]
         else:
             return task.task_info["motion_recorded"]
         

@@ -104,7 +104,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     SCREEN_SIZE = 224
     MAX_STEPS = 100
     
-    NUM_PROCESSES = 20
+    NUM_PROCESSES = 1
     TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
     SAMPLER_GPU_IDS = TRAIN_GPU_IDS
     VALID_GPU_IDS = [torch.cuda.device_count() - 1]
@@ -142,13 +142,15 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         HumanPoseSensor(uuid="human_poses"),
     ]
     
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.REWARD_CONFIG = {
             "step_penalty": -0.001,
             "goal_success_reward": 1.0,
             "failed_stop_reward": 0.0,
             "shaping_weight": 0.0,
-        }
+        }       
+        self.recording_percentage=float(kwargs["recording_percentage"])
+
 
     @classmethod
     def tag(cls):
@@ -194,22 +196,26 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
 
         return preprocessors
 
-    @classmethod
-    def create_model(cls, **kwargs) -> nn.Module:
-        has_rgb = any(isinstance(s, RGBSensor) for s in cls.SENSORS)
-        has_depth = any(isinstance(s, DepthSensor) for s in cls.SENSORS)
+    # @classmethod
+    def create_model(self, **kwargs) -> nn.Module:
+        has_rgb = any(isinstance(s, RGBSensor) for s in self.SENSORS)
+        has_depth = any(isinstance(s, DepthSensor) for s in self.SENSORS)
         goal_sensor_uuid = next(
-            (s.uuid for s in cls.SENSORS if isinstance(s, GoalObjectTypeThorSensor)),
+            (s.uuid for s in self.SENSORS if isinstance(s, GoalObjectTypeThorSensor)),
             None,
         )
         gesture_sensor_uuid = next(
-            (s.uuid for s in cls.SENSORS if isinstance(s, GestureDatasetSensor)),
+            (s.uuid for s in self.SENSORS if isinstance(s, GestureDatasetSensor)),
             None,
         )
         human_pose_uuid = next(
-            (s.uuid for s in cls.SENSORS if isinstance(s, HumanPoseSensor)),
+            (s.uuid for s in self.SENSORS if isinstance(s, HumanPoseSensor)),
             None,
         )
+        
+        for s in self.SENSORS:
+            if isinstance(s, GestureDatasetSensor):
+                s.recording_percentage = self.recording_percentage
         
 
         return ResnetTensorObjectGestureNavActorCritic(
@@ -233,6 +239,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         return dict(
             width=cls.CAMERA_WIDTH,
             height=cls.CAMERA_HEIGHT,
+            quality="Very Low",
             commit_id=cls.THOR_COMMIT_ID,
             continuousMode=True,
             applyActionNoise=cls.STOCHASTIC,
@@ -465,13 +472,13 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             return res
         
     def training_pipeline(self, **kwargs):
-        ppo_steps = int(50000)
+        ppo_steps = int(5000000)
         lr = 3e-4
         num_mini_batch = 1
         update_repeats = 4
         num_steps = 128
-        save_interval = 5000
-        log_interval = 1000 if torch.cuda.is_available() else 1
+        save_interval = 500000
+        log_interval = self.MAX_STEPS*10
         gamma = 0.99
         use_gae = True
         gae_lambda = 0.95
