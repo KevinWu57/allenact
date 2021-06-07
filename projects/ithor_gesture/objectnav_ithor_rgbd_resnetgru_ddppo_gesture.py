@@ -104,7 +104,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     SCREEN_SIZE = 224
     MAX_STEPS = 100
     
-    NUM_PROCESSES = 10
+    NUM_PROCESSES = 1
     TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
     SAMPLER_GPU_IDS = TRAIN_GPU_IDS
     VALID_GPU_IDS = [torch.cuda.device_count() - 1]
@@ -220,8 +220,10 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             human_pose_uuid=human_pose_uuid,
             rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
             depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
-            hidden_size=256,
+            hidden_size=512,
             goal_dims=32,
+            gesture_compressor_hidden_out_dim=32,
+            human_pose_hidden_out_dim=32,
         )
         
     @classmethod
@@ -247,7 +249,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             ),
             include_private_scenes=False,
             renderDepthImage=any(isinstance(s, DepthSensorThor) for s in cls.SENSORS),
-            local_executable_path = os.path.join(os.getcwd(), "ithor_env/ithor_env.x86_64"),
+            local_executable_path = os.path.join(os.getcwd(), "/home/kevin57/Unity\ Projects/ithor_env/ithor_env.x86_64"),
         )
 
     def machine_params(self, mode="train", **kwargs):

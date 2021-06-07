@@ -720,13 +720,13 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
         )
         
     def distribute_gesture(self, observations):
-        gesture_emb = self.compress_gesture(observations[self.gesture_uuid])
+        gesture_emb = self.gesture_compressor(observations[self.gesture_uuid].float())
         return gesture_emb.view(-1, self.gesture_hid_out_dim, 1, 1).expand(
             -1, -1, self.resnet_tensor_shape[-2], self.resnet_tensor_shape[-1]
         )
         
     def distribute_human_pose(self, observations):
-        human_pose_emb = self.compress_human_pose(observations[self.human_pose_uuid])
+        human_pose_emb = self.human_pose_compressor(observations[self.human_pose_uuid].float())
         return human_pose_emb.view(-1, self.human_pose_hid_out_dim, 1, 1).expand(
             -1, -1, self.resnet_tensor_shape[-2], self.resnet_tensor_shape[-1]
         )
