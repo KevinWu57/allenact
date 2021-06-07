@@ -646,7 +646,12 @@ class HumanPoseSensor(Sensor):
         return
     
     def _get_observation_space(self):
-        return gym.spaces.Box(low=-1.0, high=1.0, shape=(4,))
+        return gym.spaces.Box(
+            low=-1.0, 
+            high=1.0, 
+            shape=(4,),
+            dtype=np.float32
+        )
     
     def get_observation(
         self,
@@ -657,5 +662,5 @@ class HumanPoseSensor(Sensor):
     ) -> np.ndarray:
         
         # Get the human position of the current episode
-        human_pose = np.array(list(map(lambda x:x/10.0, task.task_info["human_position"].values())) + [task.task_info["human_rotation"]])
+        human_pose = np.array(list(map(lambda x:x/10.0, task.task_info["human_position"].values())) + [task.task_info["human_rotation"]], dtype=np.float32)
         return human_pose
