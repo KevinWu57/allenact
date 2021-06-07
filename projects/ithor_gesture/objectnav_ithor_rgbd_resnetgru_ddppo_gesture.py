@@ -99,8 +99,8 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     STOCHASTIC = True
     HORIZONTAL_FIELD_OF_VIEW = 90
 
-    CAMERA_WIDTH = 400
-    CAMERA_HEIGHT = 300
+    CAMERA_WIDTH = 224
+    CAMERA_HEIGHT = 224
     SCREEN_SIZE = 224
     MAX_STEPS = 100
     
