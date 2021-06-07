@@ -1162,7 +1162,7 @@ class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
         
         # paths of recorded motions and predictions
         task_info["motion_recorded_path"] = "/".join([self.scene_directory, episode["motion"]]) if self.scene_directory[-1] != "/" else "".join([self.scene_directory, episode["motion"]])
-        episode["motion_prediction"] = "predictions/" + episode["motion"].split('/')[1].split('.')[0] + f"_prediction_{random.randint(0,9)}.csv"
+        episode["motion_prediction"] = "predictions/" + episode["motion"].split('/')[1].split('.')[0] + f"_prediction.csv"
         task_info["motion_predicted_path"] = "/".join([self.scene_directory, episode["motion_prediction"]]) if self.scene_directory[-1] != "/" else "".join([self.scene_directory, episode["motion_prediction"]])
         
         # get the recorded and predicted motion data
