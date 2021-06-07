@@ -1108,13 +1108,54 @@ class NavToPartnerTaskSampler(TaskSampler):
         self.seed = seed
         if seed is not None:
             set_seed(seed)
-            
-class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
+                      
+class ObjectGestureNavDatasetTaskSampler(TaskSampler):
     def __init__(
         self,
+        scenes: List[str],
+        scene_directory: str,
+        sensors: List[Sensor],
+        max_steps: int,
+        env_args: Dict[str, Any],
+        action_space: gym.Space,
+        rewards_config: Dict,
+        seed: Optional[int] = None,
+        deterministic_cudnn: bool = False,
+        loop_dataset: bool = True,
+        allow_flipping=False,
+        env_class=RoboThorEnvironment,
         **kwargs,
     ) -> None:
-        super(ObjectGestureNavDatasetTaskSampler, self).__init__(**kwargs)
+        self.rewards_config = rewards_config
+        self.env_args = env_args
+        self.scenes = scenes
+        self.scene_directory = scene_directory
+        self.episodes = {
+            scene: ObjectNavDatasetTaskSampler.load_dataset(
+                scene, scene_directory + "/episodes"
+            )
+            for scene in scenes
+        }
+        self.env_class = env_class
+        self.object_types = [
+            ep["object_type"] for scene in self.episodes for ep in self.episodes[scene]
+        ]
+        self.env: Optional[RoboThorEnvironment] = None
+        self.sensors = sensors
+        self.max_steps = max_steps
+        self._action_space = action_space
+        self.allow_flipping = allow_flipping
+        self.scene_counter: Optional[int] = None
+        self.scene_order: Optional[List[str]] = None
+        self.scene_id: Optional[int] = None
+        # get the total number of tasks assigned to this process
+        if loop_dataset:
+            self.max_tasks = None
+        else:
+            self.max_tasks = sum(len(self.episodes[scene]) for scene in self.episodes)
+        self.reset_tasks = self.max_tasks
+        self.scene_index = 0
+        self.episode_index = 0
         
         self.recorded_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
             base_dir='/'.join([self.scene_directory, "motions"])
@@ -1122,6 +1163,16 @@ class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
         self.predicted_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
             base_dir='/'.join([self.scene_directory, "predictions"])
         )
+
+        self._last_sampled_task: Optional[ObjectNavTask] = None
+
+        self.seed: Optional[int] = None
+        self.set_seed(seed)
+
+        if deterministic_cudnn:
+            set_deterministic_cudnn()
+
+        self.reset()
         
     def load_motions(base_dir: str) -> Dict[str, np.ndarray]:
         motion_files = glob.glob('/'.join([base_dir, "*.csv"]))
@@ -1130,6 +1181,84 @@ class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
             file_name = file_path.split('/')[-1]
             output[file_name] = np.genfromtxt(file_path, dtype="float", delimiter=";", skip_header=1)
         return output
+    
+    def _create_environment(self) -> RoboThorEnvironment:
+        env = self.env_class(**self.env_args)
+        return env
+
+    @staticmethod
+    def load_dataset(scene: str, base_directory: str) -> List[Dict]:
+        filename = (
+            "/".join([base_directory, scene])
+            if base_directory[-1] != "/"
+            else "".join([base_directory, scene])
+        )
+        filename += ".json.gz"
+        fin = gzip.GzipFile(filename, "r")
+        json_bytes = fin.read()
+        fin.close()
+        json_str = json_bytes.decode("utf-8")
+        data = json.loads(json_str)
+        random.shuffle(data)
+        return data
+
+    @staticmethod
+    def load_distance_cache_from_file(scene: str, base_directory: str) -> Dict:
+        filename = (
+            "/".join([base_directory, scene])
+            if base_directory[-1] != "/"
+            else "".join([base_directory, scene])
+        )
+        filename += ".json.gz"
+        fin = gzip.GzipFile(filename, "r")
+        json_bytes = fin.read()
+        fin.close()
+        json_str = json_bytes.decode("utf-8")
+        data = json.loads(json_str)
+        return data
+
+    @property
+    def __len__(self) -> Union[int, float]:
+        """Length.
+
+        # Returns
+
+        Number of total tasks remaining that can be sampled. Can be float('inf').
+        """
+        return float("inf") if self.max_tasks is None else self.max_tasks
+
+    @property
+    def total_unique(self) -> Optional[Union[int, float]]:
+        return self.reset_tasks
+
+    @property
+    def last_sampled_task(self) -> Optional[ObjectNavTask]:
+        return self._last_sampled_task
+
+    def close(self) -> None:
+        if self.env is not None:
+            self.env.stop()
+
+    @property
+    def all_observation_spaces_equal(self) -> bool:
+        """Check if observation spaces equal.
+
+        # Returns
+
+        True if all Tasks that can be sampled by this sampler have the
+            same observation space. Otherwise False.
+        """
+        return True
+
+    @property
+    def length(self) -> Union[int, float]:
+        """Length.
+
+        # Returns
+
+        Number of total tasks remaining that can be sampled. Can be float('inf').
+        """
+        return float("inf") if self.max_tasks is None else self.max_tasks
     
     def next_task(self, force_advance_scene: bool = False) -> Optional[ObjectGestureNavTask]:
         if self.max_tasks is not None and self.max_tasks <= 0:
@@ -1214,3 +1343,13 @@ class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
             reward_configs=self.rewards_config,
         )
         return self._last_sampled_task
+    
+    def reset(self):
+        self.episode_index = 0
+        self.scene_index = 0
+        self.max_tasks = self.reset_tasks
+
+    def set_seed(self, seed: int):
+        self.seed = seed
+        if seed is not None:
+            set_seed(seed)
