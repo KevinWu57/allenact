@@ -311,6 +311,7 @@ class ObjectNavDatasetTaskSampler(TaskSampler):
         self.rewards_config = rewards_config
         self.env_args = env_args
         self.scenes = scenes
+        self.scene_directory = scene_directory
         self.episodes = {
             scene: ObjectNavDatasetTaskSampler.load_dataset(
                 scene, scene_directory + "/episodes"
