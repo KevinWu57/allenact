@@ -49,7 +49,7 @@ from allenact.embodiedai.preprocessors.resnet import ResNetPreprocessor
 class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     """An Object Navigation experiment configuration in iThor with RGBD and gesture input."""
 
-    _TARGET_TYPES = tuple(
+    TARGET_TYPES = tuple(
         sorted(
             [
                 "Apple",
@@ -78,54 +78,6 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
                 "Table",
                 "Lamp",
                 "Laptop",
-            ]
-        )
-    )
-
-    TARGET_TYPES = tuple(
-        sorted(
-            [
-                'AlarmClock',
-                'Apple',
-                'ArmChair',
-                'Bed',
-                'Box',
-                'Bread',
-                'ButterKnife',
-                'Chair',
-                'CoffeeTable',
-                'Cup',
-                'DeskLamp',
-                'DiningTable',
-                'FloorLamp',
-                'Fork',
-                'HandTowel',
-                'HandTowelHolder',
-                'Knife',
-                'Laptop',
-                'Newspaper',
-                'PaperTowelRoll',
-                'Plate',
-                'Plunger',
-                'Poster',
-                'Potato',
-                'RemoteControl',
-                'ShowerCurtain',
-                'ShowerDoor',
-                'ShowerGlass',
-                'ShowerHead',
-                'SideTable',
-                'Sofa',
-                'Spoon',
-                'TableTopDecor',
-                'Television',
-                'TissueBox',
-                'ToiletPaper',
-                'ToiletPaperHanger',
-                'Tomato',
-                'Towel',
-                'TowelHolder',
-                'Window'
             ]
         )
     )
