@@ -1169,7 +1169,7 @@ class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
         task_info["initial_horizon"] = episode.get("initial_horizon", 0)
         task_info["distance_to_target"] = episode.get("shortest_path_length")
         task_info["path_to_target"] = episode.get("shortest_path")
-        task_info["object_type"] = episode["object_type"]
+        task_info["object_type"] = episode["targetSimObjType"]
         task_info["target_type"] = episode["targetType"]
         task_info["id"] = episode["id"]
         
