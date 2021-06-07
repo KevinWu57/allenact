@@ -5,6 +5,7 @@ import random
 from typing import List, Optional, Union, Dict, Any, cast, Tuple
 
 import gym
+import glob
 import numpy as np
 
 from allenact.base_abstractions.sensor import Sensor
@@ -1109,6 +1110,27 @@ class NavToPartnerTaskSampler(TaskSampler):
             set_seed(seed)
             
 class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
+    def __init__(
+        self,
+        **kwargs,
+    ) -> None:
+        super(ObjectGestureNavDatasetTaskSampler, self).__init__(**kwargs)
+        
+        self.recorded_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
+            base_dir='/'.join([self.scene_directory, "motions"])
+        )
+        self.predicted_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
+            base_dir='/'.join([self.scene_directory, "predictions"])
+        )
+        
+    def load_motions(base_dir: str) -> Dict[str, np.ndarray]:
+        motion_files = glob.glob('/'.join([base_dir, "*.csv"]))
+        output = {}
+        for file_path in motion_files:
+            file_name = file_path.split('/')[-1]
+            output[file_name] = np.genfromtxt(file_path, dtype="float", delimiter=";", skip_header=1)
+        return output
+    
     def next_task(self, force_advance_scene: bool = False) -> Optional[ObjectGestureNavTask]:
         if self.max_tasks is not None and self.max_tasks <= 0:
             return None
@@ -1161,13 +1183,12 @@ class ObjectGestureNavDatasetTaskSampler(ObjectNavDatasetTaskSampler):
         task_info["stage"] = self.scene_directory.split('/')[-1] if self.scene_directory[-1] != "/" else self.scene_directory.split('/')[-2]
         
         # paths of recorded motions and predictions
-        task_info["motion_recorded_path"] = "/".join([self.scene_directory, episode["motion"]]) if self.scene_directory[-1] != "/" else "".join([self.scene_directory, episode["motion"]])
-        episode["motion_prediction"] = "predictions/" + episode["motion"].split('/')[1].split('.')[0] + f"_prediction.csv"
-        task_info["motion_predicted_path"] = "/".join([self.scene_directory, episode["motion_prediction"]]) if self.scene_directory[-1] != "/" else "".join([self.scene_directory, episode["motion_prediction"]])
+        task_info["motion_recorded_name"] = episode["motion"].split('/')[-1] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]+".csv"
+        task_info["motion_predicted_name"] = (episode["motion"].split('/')[-1].split('.')[0] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]) + f"_prediction.csv"
         
         # get the recorded and predicted motion data
-        task_info["motion_recorded"] = np.genfromtxt(task_info["motion_recorded_path"], dtype="float", delimiter=";", skip_header=1)
-        task_info["motion_predicted"] = np.genfromtxt(task_info["motion_predicted_path"], dtype="float", delimiter=";", skip_header=1)
+        task_info["motion_recorded"] = self.recorded_motions[task_info["motion_recorded_name"]]
+        task_info["motion_predicted"] = self.predicted_motions[task_info["motion_predicted_name"]]
         
         if self.allow_flipping and random.random() > 0.5:
             task_info["mirrored"] = True
