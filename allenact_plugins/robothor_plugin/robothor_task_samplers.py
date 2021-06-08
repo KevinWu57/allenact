@@ -1112,6 +1112,7 @@ class NavToPartnerTaskSampler(TaskSampler):
 class ObjectGestureNavDatasetTaskSampler(TaskSampler):
     def __init__(
         self,
+        recording_percentage,
         scenes: List[str],
         scene_directory: str,
         sensors: List[Sensor],
@@ -1131,8 +1132,8 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         self.scenes = scenes
         self.scene_directory = scene_directory
         self.episodes = {
-            scene: ObjectNavDatasetTaskSampler.load_dataset(
-                scene, scene_directory + "/episodes"
+            scene: ObjectGestureNavDatasetTaskSampler.load_dataset(
+                scene, scene_directory + "/episodes", recording_percentage
             )
             for scene in scenes
         }
@@ -1187,7 +1188,7 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         return env
 
     @staticmethod
-    def load_dataset(scene: str, base_directory: str) -> List[Dict]:
+    def load_dataset(scene: str, base_directory: str, recording_percentage: float = 1.0) -> List[Dict]:
         filename = (
             "/".join([base_directory, scene])
             if base_directory[-1] != "/"
@@ -1200,6 +1201,7 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         json_str = json_bytes.decode("utf-8")
         data = json.loads(json_str)
         random.shuffle(data)
+        data = random.sample(data, int(len(data)*recording_percentage))
         return data
 
     @staticmethod
