@@ -602,10 +602,10 @@ class GestureDatasetSensor(Sensor):
     def __init__(
         self,
         uuid: str = "gestures",
-        recording_percentage: float = 1.0,
+        recording_sample_percentage: float = 1.0,
         **kwargs: Any
     ):  
-        self.recording_percentage = recording_percentage
+        self.recording_sample_percentage = recording_sample_percentage
         
         observation_space = self._get_observation_space()
         
