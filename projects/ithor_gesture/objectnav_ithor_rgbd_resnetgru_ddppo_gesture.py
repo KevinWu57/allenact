@@ -469,7 +469,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
                 include_expert_sensor=False,
                 allow_oversample=False,
             )
-            res["env_args"]["all_metadata_available"] = False
+            res["env_args"]["all_metadata_available"] = True # TODO we can log all metrics (sr and spl) by setting this to true WHY?
             res["rewards_config"] = {**res["rewards_config"], "shaping_weight": 0}
             res["scene_directory"] = self.TEST_DATASET_DIR
             res["loop_dataset"] = False
