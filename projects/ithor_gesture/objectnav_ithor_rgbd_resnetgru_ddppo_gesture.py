@@ -313,9 +313,9 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             sensor_preprocessor_graph=sensor_preprocessor_graph,
         )
 
-    @classmethod
-    def make_sampler_fn(cls, **kwargs) -> TaskSampler:
-        return ObjectGestureNavDatasetTaskSampler(**kwargs)
+    # @classmethod
+    def make_sampler_fn(self, **kwargs) -> TaskSampler:
+        return ObjectGestureNavDatasetTaskSampler(self.recording_percentage, **kwargs)
 
     @staticmethod
     def _partition_inds(n: int, num_parts: int):
