@@ -7,6 +7,8 @@ import gym.spaces
 import numpy as np
 import torch
 
+import math
+
 from allenact.base_abstractions.sensor import Sensor, RGBSensor
 from allenact.base_abstractions.task import Task
 from allenact.embodiedai.mapping.mapping_utils.map_builders import (
@@ -603,9 +605,11 @@ class GestureDatasetSensor(Sensor):
         self,
         uuid: str = "gestures",
         recording_sample_percentage: float = 1.0,
+        add_intervention: bool = False,
         **kwargs: Any
     ):  
         self.recording_sample_percentage = recording_sample_percentage
+        self.add_intervention = add_intervention
         
         observation_space = self._get_observation_space()
         
@@ -633,13 +637,10 @@ class GestureDatasetSensor(Sensor):
                 return np.ones(shape=(100, 95))
         
         rec_pred = [task.task_info["motion_recorded"], task.task_info["motion_predicted"]]
-        if stage == "train":
         return rec_pred[np.random.choice(
             a=2,
             p=[self.recording_sample_percentage, 1.0-self.recording_sample_percentage]
         )]
-        else:
-            return task.task_info["motion_recorded"]
         
 class HumanPoseSensor(Sensor):
     """
