@@ -928,7 +928,10 @@ class OnPolicyRunner(object):
                                         pkgs=collected[:nworkers],
                                         all_results=test_results,
                                     )
-
+                                    for test_result in test_results:
+                                        for task in test_result["tasks"]:
+                                            del task["task_info"]["motion_recorded"]
+                                            del task["task_info"]["motion_predicted"]
                                     collected = collected[nworkers:]
                                     with open(metrics_file, "w") as f:
                                         json.dump(
