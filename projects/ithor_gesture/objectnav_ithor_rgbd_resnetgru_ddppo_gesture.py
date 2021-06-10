@@ -116,7 +116,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     
     ADVANCE_SCENE_ROLLOUT_PERIOD = None
     
-    THOR_COMMIT_ID = None
+    THOR_COMMIT_ID = "b4df6db68eee7fda65cf7430843f28bd456e51fd"
     
     try:
         with open("instruction_tokens.txt", "r") as f:
@@ -237,7 +237,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         
     @classmethod
     def env_args(cls):
-        # assert cls.THOR_COMMIT_ID is not None
+        assert cls.THOR_COMMIT_ID is not None
 
         return dict(
             width=cls.CAMERA_WIDTH,
@@ -259,7 +259,8 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             ),
             include_private_scenes=False,
             renderDepthImage=any(isinstance(s, DepthSensorThor) for s in cls.SENSORS),
-            local_executable_path = os.path.join(os.getcwd(), "/home/kevin57/Unity\ Projects/ithor_env/ithor_env.x86_64"),
+            # local_executable_path = "/home/kevin57/Unity\ Projects/ithor_env/ithor_env.x86_64",
+            # local_executable_path = "/home/qi/ithor_env/ithor_env.x86_64",
         )
 
     def machine_params(self, mode="train", **kwargs):
