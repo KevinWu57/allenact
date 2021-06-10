@@ -148,7 +148,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             "goal_success_reward": 1.0,
             "failed_stop_reward": 0.0,
             "shaping_weight": 0.0,
-        }       
+        } # TODO add collision penalty   
         self.recording_sample_percentage=float(kwargs["recording_sample_percentage"])
         self.recording_percentage=float(kwargs["recording_percentage"])
         self.add_intervention=bool(kwargs["add_intervention"])
