@@ -148,7 +148,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             "goal_success_reward": 1.0,
             "failed_stop_reward": 0.0,
             "shaping_weight": 0.0,
-        } # TODO add collision penalty   
+        } # TODO Gesture add collision penalty   
         self.recording_sample_percentage=float(kwargs["recording_sample_percentage"])
         self.recording_percentage=float(kwargs["recording_percentage"])
         self.add_intervention=bool(kwargs["add_intervention"])
@@ -469,7 +469,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
                 include_expert_sensor=False,
                 allow_oversample=False,
             )
-            res["env_args"]["all_metadata_available"] = True # TODO we can log all metrics (sr and spl) by setting this to true WHY?
+            res["env_args"]["all_metadata_available"] = True # TODO Gesture we can log all metrics (sr and spl) by setting this to true WHY?
             res["rewards_config"] = {**res["rewards_config"], "shaping_weight": 0}
             res["scene_directory"] = self.TEST_DATASET_DIR
             res["loop_dataset"] = False

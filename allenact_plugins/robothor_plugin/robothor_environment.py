@@ -384,7 +384,7 @@ class RoboThorEnvironment:
             assert self.last_action_success, "Force action failed with {}".format(state)
 
         # get_logger().debug("location after teleport full {}".format(self.agent_state()))
-        # self.controller.step("TeleportFull", **self.agent_state())  # TODO only for debug
+        # self.controller.step("TeleportFull", **self.agent_state())  # TODO Gesture only for debug
         # get_logger().debug("location after re-teleport full {}".format(self.agent_state()))
 
         return self.agent_state(agent_id=agent_id)
@@ -402,7 +402,7 @@ class RoboThorEnvironment:
         self.controller.step(action="GetReachablePositions")
         # assert (
         #     self.last_action_success
-        # ), f"Could not get reachable positions for reason {self.last_event.metadata['errorMessage']}." TODO: I need to disable this since a Reachable Positions error will occur
+        # ), f"Could not get reachable positions for reason {self.last_event.metadata['errorMessage']}." TODO Gesture: I need to disable this since a Reachable Positions error will occur
         return self.last_action_return
 
     @property
