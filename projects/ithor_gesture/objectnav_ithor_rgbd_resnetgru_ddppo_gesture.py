@@ -104,7 +104,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     SCREEN_SIZE = 224
     MAX_STEPS = 100
     
-    NUM_PROCESSES = 1
+    NUM_PROCESSES = 20
     TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
     SAMPLER_GPU_IDS = TRAIN_GPU_IDS
     VALID_GPU_IDS = [torch.cuda.device_count() - 1]
@@ -383,14 +383,14 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             "rewards_config": self.REWARD_CONFIG,
             "env_args": {
                 **self.env_args(),
-                # "x_display": (
-                #     f"0.{devices[process_ind % len(devices)]}"
-                #     if devices is not None
-                #     and len(devices) > 0
-                #     and devices[process_ind % len(devices)] >= 0
-                #     else None
-                # ),
-                "x_display": "1",
+                "x_display": (
+                     f"0.{devices[process_ind % len(devices)]}"
+                     if devices is not None
+                     and len(devices) > 0
+                     and devices[process_ind % len(devices)] >= 0
+                     else None
+                 ),
+                # "x_display": "1",
             },
         }
 
@@ -476,12 +476,12 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             return res
         
     def training_pipeline(self, **kwargs):
-        ppo_steps = int(5000000)
+        ppo_steps = int(10000000)
         lr = 3e-4
         num_mini_batch = 1
         update_repeats = 4
         num_steps = 128
-        save_interval = 500000
+        save_interval = 1000000
         log_interval = self.MAX_STEPS*10
         gamma = 0.99
         use_gae = True
