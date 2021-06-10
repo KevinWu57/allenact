@@ -1311,9 +1311,6 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         task_info["human_rotation"] = episode["humanRot"]
         task_info["target_position"] = episode["targetPos"]    
         
-        # check stage: train, val, or test
-        task_info["stage"] = self.scene_directory.split('/')[-1] if self.scene_directory[-1] != "/" else self.scene_directory.split('/')[-2]
-        
         # paths of recorded motions and predictions
         task_info["motion_recorded_name"] = episode["motion"].split('/')[-1] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]+".csv"
         task_info["motion_predicted_name"] = (episode["motion"].split('/')[-1].split('.')[0] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]) + f"_prediction.csv"
