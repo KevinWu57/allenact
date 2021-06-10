@@ -1309,7 +1309,7 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         task_info["instruction"] = episode["instruction"]
         task_info["human_position"] = episode["humanPos"]
         task_info["human_rotation"] = episode["humanRot"]
-        task_info["target_position"] = episode["targetPos"]
+        task_info["target_position"] = episode["targetPos"]    
         
         # check stage: train, val, or test
         task_info["stage"] = self.scene_directory.split('/')[-1] if self.scene_directory[-1] != "/" else self.scene_directory.split('/')[-2]

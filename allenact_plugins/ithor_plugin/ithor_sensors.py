@@ -629,10 +629,10 @@ class GestureDatasetSensor(Sensor):
         
         rec_pred = [task.task_info["motion_recorded"], task.task_info["motion_predicted"]]
         if stage == "train":
-            return rec_pred[np.random.choice(
-                a=2,
-                p=[self.recording_sample_percentage, 1.0-self.recording_sample_percentage]
-            )]
+        return rec_pred[np.random.choice(
+            a=2,
+            p=[self.recording_sample_percentage, 1.0-self.recording_sample_percentage]
+        )]
         else:
             return task.task_info["motion_recorded"]
         
