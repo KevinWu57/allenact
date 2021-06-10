@@ -623,9 +623,14 @@ class GestureDatasetSensor(Sensor):
         **kwargs: Any
     ) -> np.ndarray:
         
-        # First, check the stage
-        stage = task.task_info["stage"]
-        assert stage in ["train", "val", "test"], "Please make sure you put dataset under directory of train, val, and test"
+        if self.add_intervention:
+            # Calculate the direction between agent and target
+            agent_pos, agent_rot, target_pos = env.controller.last_event.metadata["agent"]["position"], env.controller.last_event.metadata["agent"]["rotation"]["y"], task.task_info["target_position"]
+            a = 180.0*math.atan2(target_pos["z"]-agent_pos["z"], target_pos["x"]-agent_pos["x"])/math.pi
+            a = a if a > 0 else 360.0+a # direction between agent and target
+            angle = min([360.0-abs((a-agent_rot)%360), abs((a-agent_rot)%360)])
+            if angle > 60.0: # add intervention here
+                return np.ones(shape=(100, 95))
         
         rec_pred = [task.task_info["motion_recorded"], task.task_info["motion_predicted"]]
         if stage == "train":

@@ -149,7 +149,9 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             "failed_stop_reward": 0.0,
             "shaping_weight": 0.0,
         }       
+        self.recording_sample_percentage=float(kwargs["recording_sample_percentage"])
         self.recording_percentage=float(kwargs["recording_percentage"])
+        self.add_intervention=bool(kwargs["add_intervention"])
 
 
     @classmethod
@@ -215,7 +217,8 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         
         for s in self.SENSORS:
             if isinstance(s, GestureDatasetSensor):
-                s.recording_percentage = self.recording_percentage
+                s.recording_sample_percentage = self.recording_sample_percentage
+                s.add_intervention = self.add_intervention
         
 
         return ResnetTensorObjectGestureNavActorCritic(

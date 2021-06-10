@@ -193,3 +193,9 @@ src
 # Package building
 *.egg_info
 *.egg-info
+
+# Shell running scripts
+run*.sh
+
+# Storage files
+storage/
