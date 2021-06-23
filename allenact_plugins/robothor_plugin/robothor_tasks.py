@@ -583,6 +583,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
         self._all_metadata_available = env.all_metadata_available
 
         self._rewards: List[float] = []
+        self._intervention: List[bool] = []
         self._distance_to_goal: List[float] = []
         self._metrics = None
         self.path: List = (
@@ -652,6 +653,10 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
             done=self.is_done(),
             info={"last_action_success": self.last_action_success, "action": action},
         )
+        
+        # Update the intervention list
+        self._intervention.append(self._is_intervention_needed())
+        
         return step_result
 
     def render(self, mode: str = "rgb", *args, **kwargs) -> np.ndarray:
@@ -676,6 +681,18 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
             o["objectId"] == self.task_info["objectId"]
             for o in self.env.visible_objects()
         )
+        
+    def _is_intervention_needed(self) -> bool:
+        """
+        Check if intervention is needed at the current step
+        """
+        agent_pos, agent_rot, target_pos = self.env.controller.last_event.metadata["agent"]["position"], \
+                                           self.env.controller.last_event.metadata["agent"]["rotation"]["y"], \
+                                           self.task_info["target_position"]
+        a = 180.0*math.atan2(target_pos["z"]-agent_pos["z"], target_pos["x"]-agent_pos["x"])/math.pi
+        a = a if a > 0 else 360.0+a # direction between agent and target
+        angle = min([360.0-abs((a-agent_rot)%360), abs((a-agent_rot)%360)])
+        return angle > 60.0
 
     def shaping(self) -> float:
         rew = 0.0
@@ -762,6 +779,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
                 "total_reward": np.sum(self._rewards),
                 "dist_to_target": dist2tget,
                 "spl": 0 if spl is None else spl,
+                "intervention_percentage": np.sum(self._intervention)*1.0/self.num_steps_taken(),
             }
         return metrics
 
