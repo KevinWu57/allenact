@@ -1113,6 +1113,8 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
     def __init__(
         self,
         recording_percentage,
+        prediction_percentage,
+        smoothed,
         scenes: List[str],
         scene_directory: str,
         sensors: List[Sensor],
@@ -1127,13 +1129,24 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         env_class=RoboThorEnvironment,
         **kwargs,
     ) -> None:
+        self.recording_percentage = recording_percentage
+        self.prediction_percentage = prediction_percentage
+        self.smoothed = smoothed
         self.rewards_config = rewards_config
         self.env_args = env_args
         self.scenes = scenes
         self.scene_directory = scene_directory
+        
+        self.recorded_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
+            base_dir='/'.join([self.scene_directory, "motions_smoothed" if self.smoothed else "motions"])
+        )
+        self.predicted_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
+            base_dir='/'.join([self.scene_directory, "predictions"])
+        )
+        
         self.episodes = {
-            scene: ObjectGestureNavDatasetTaskSampler.load_dataset(
-                scene, scene_directory + "/episodes", recording_percentage
+            scene: self.load_dataset(
+                scene, scene_directory + "/episodes", self.recording_percentage, self.prediction_percentage
             )
             for scene in scenes
         }
@@ -1157,13 +1170,6 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         self.reset_tasks = self.max_tasks
         self.scene_index = 0
         self.episode_index = 0
-        
-        self.recorded_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
-            base_dir='/'.join([self.scene_directory, "motions"])
-        )
-        self.predicted_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
-            base_dir='/'.join([self.scene_directory, "predictions"])
-        )
 
         self._last_sampled_task: Optional[ObjectNavTask] = None
 
@@ -1187,8 +1193,8 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         env = self.env_class(**self.env_args)
         return env
 
-    @staticmethod
-    def load_dataset(scene: str, base_directory: str, recording_percentage: float = 1.0) -> List[Dict]:
+    # @staticmethod
+    def load_dataset(self, scene: str, base_directory: str, recording_percentage: float = 1.0, prediction_percentage: float = 1.0) -> List[Dict]:
         filename = (
             "/".join([base_directory, scene])
             if base_directory[-1] != "/"
@@ -1201,8 +1207,18 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         json_str = json_bytes.decode("utf-8")
         data = json.loads(json_str)
         random.shuffle(data)
-        data = random.sample(data, int(len(data)*recording_percentage))
-        return data
+        
+        data_recorded = data[:int(len(data)*recording_percentage)]
+        for m in data_recorded:
+            m["motion_path"] = m["motion"].split('/')[-1] if m["motion"].endswith(".csv") else m["motion"].split('/')[-1]+".csv"
+            m["motion_loaded"] = self.recorded_motions[m["motion_path"]]
+        
+        data_predicted = data[:int(len(data)*prediction_percentage)]
+        for m in data_predicted:
+            m["motion_path"] = (m["motion"].split('/')[-1].split('.')[0] if m["motion"].endswith(".csv") else m["motion"].split('/')[-1]) + f"_prediction.csv"
+            m["motion_loaded"] = self.predicted_motions[m["motion_path"]]
+        
+        return data_recorded + data_predicted
 
     @staticmethod
     def load_distance_cache_from_file(scene: str, base_directory: str) -> Dict:
@@ -1311,13 +1327,14 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         task_info["human_rotation"] = episode["humanRot"]
         task_info["target_position"] = episode["targetPos"]    
         
-        # paths of recorded motions and predictions
-        task_info["motion_recorded_name"] = episode["motion"].split('/')[-1] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]+".csv"
-        task_info["motion_predicted_name"] = (episode["motion"].split('/')[-1].split('.')[0] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]) + f"_prediction.csv"
+        # # paths of recorded motions and predictions
+        # task_info["motion_recorded_name"] = episode["motion"].split('/')[-1] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]+".csv"
+        # task_info["motion_predicted_name"] = (episode["motion"].split('/')[-1].split('.')[0] if episode["motion"].endswith(".csv") else episode["motion"].split('/')[-1]) + f"_prediction.csv"
         
-        # get the recorded and predicted motion data
-        task_info["motion_recorded"] = self.recorded_motions[task_info["motion_recorded_name"]]
-        task_info["motion_predicted"] = self.predicted_motions[task_info["motion_predicted_name"]]
+        # # get the recorded and predicted motion data
+        # task_info["motion_recorded"] = self.recorded_motions[task_info["motion_recorded_name"]]
+        # task_info["motion_predicted"] = self.predicted_motions[task_info["motion_predicted_name"]]
+        task_info["motion_loaded"] = episode["motion_loaded"]
         
         if self.allow_flipping and random.random() > 0.5:
             task_info["mirrored"] = True
