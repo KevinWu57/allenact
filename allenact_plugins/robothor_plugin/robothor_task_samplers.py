@@ -1181,7 +1181,7 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
 
         self.reset()
         
-    def load_motions(base_dir: str) -> Dict[str, np.ndarray]:
+    def load_motions(self, base_dir: str) -> Dict[str, np.ndarray]:
         motion_files = glob.glob('/'.join([base_dir, "*.csv"]))
         output = {}
         for file_path in motion_files:
