@@ -104,7 +104,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     SCREEN_SIZE = 224
     MAX_STEPS = 100
     
-    NUM_PROCESSES = 20
+    NUM_PROCESSES = 1
     TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
     SAMPLER_GPU_IDS = TRAIN_GPU_IDS
     VALID_GPU_IDS = [torch.cuda.device_count() - 1]
@@ -149,9 +149,11 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             "failed_stop_reward": 0.0,
             "shaping_weight": 0.0,
         } # TODO Gesture add collision penalty   
-        self.recording_sample_percentage=float(kwargs["recording_sample_percentage"])
         self.recording_percentage=float(kwargs["recording_percentage"])
+        self.prediction_percentage=float(kwargs["prediction_percentage"])
         self.add_intervention=bool(kwargs["add_intervention"])
+        self.smoothed=bool(kwargs["smoothed"])
+        self.room_type=str(kwargs["room_type"])
 
 
     @classmethod
@@ -217,7 +219,6 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         
         for s in self.SENSORS:
             if isinstance(s, GestureDatasetSensor):
-                s.recording_sample_percentage = self.recording_sample_percentage
                 s.add_intervention = self.add_intervention
         
 
@@ -315,7 +316,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
 
     # @classmethod
     def make_sampler_fn(self, **kwargs) -> TaskSampler:
-        return ObjectGestureNavDatasetTaskSampler(self.recording_percentage, **kwargs)
+        return ObjectGestureNavDatasetTaskSampler(self.recording_percentage, self.prediction_percentage, self.smoothed, **kwargs)
 
     @staticmethod
     def _partition_inds(n: int, num_parts: int):
@@ -335,7 +336,24 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         allow_oversample: bool = False,
     ) -> Dict[str, Any]:
         path = os.path.join(scenes_dir, "*.json.gz")
+        
         scenes = [scene.split("/")[-1].split(".")[0] for scene in glob.glob(path)]
+        scenes = list(sorted(scenes, key=lambda x: int(x.strip("FloorPlan"))))
+        scene_len = len(scenes)
+        # Get scenes according to room type
+        if self.room_type == "all":
+            scenes = scenes[:]
+        elif self.room_type == "kitchen":
+            scenes = scenes[:scene_len//4]
+        elif self.room_type == "livingroom":
+            scenes = scenes[scene_len//4:scene_len//2]
+        elif self.room_type == "bedroom":
+            scenes = scenes[scene_len//2:scene_len*3//4]
+        elif self.room_type == "bathroom":
+            scenes = scenes[scene_len*3//4:]
+        else:
+            raise ValueError("Please give a valid room type")
+
         if len(scenes) == 0:
             raise RuntimeError(
                 (
