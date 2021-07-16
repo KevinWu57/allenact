@@ -1180,8 +1180,9 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
             set_deterministic_cudnn()
 
         self.reset()
-        
-    def load_motions(self, base_dir: str) -> Dict[str, np.ndarray]:
+    
+    @classmethod
+    def load_motions(cls, base_dir: str) -> Dict[str, np.ndarray]:
         motion_files = glob.glob('/'.join([base_dir, "*.csv"]))
         output = {}
         for file_path in motion_files:
