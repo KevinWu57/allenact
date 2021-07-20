@@ -92,7 +92,7 @@ class GoalObjectTypeThorSensor(Sensor):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        return self.object_type_to_ind[task.task_info["target_type"]]
+        return self.object_type_to_ind[task.task_info["object_type"]]
 
 
 class TakeEndActionThorNavSensor(
@@ -670,3 +670,55 @@ class HumanPoseSensor(Sensor):
         # Get the human position of the current episode
         human_pose = np.array(list(map(lambda x:x/10.0, task.task_info["human_position"].values())) + [task.task_info["human_rotation"]], dtype=np.float32)
         return human_pose
+
+class GoalObjectTypeThorGestureSensor(Sensor):
+    def __init__(
+        self,
+        object_types: Sequence[str],
+        target_to_detector_map: Optional[Dict[str, str]] = None,
+        detector_types: Optional[Sequence[str]] = None,
+        uuid: str = "goal_object_type_ind",
+        **kwargs: Any,
+    ):
+        self.ordered_object_types = list(object_types)
+        assert self.ordered_object_types == sorted(
+            self.ordered_object_types
+        ), "object types input to goal object type sensor must be ordered"
+
+        self.target_to_detector_map = target_to_detector_map
+
+        if target_to_detector_map is None:
+            self.object_type_to_ind = {
+                ot: i for i, ot in enumerate(self.ordered_object_types)
+            }
+        else:
+            assert (
+                detector_types is not None
+            ), "Missing detector_types for map {}".format(target_to_detector_map)
+            self.target_to_detector = target_to_detector_map
+            self.detector_types = detector_types
+
+            detector_index = {ot: i for i, ot in enumerate(self.detector_types)}
+            self.object_type_to_ind = {
+                ot: detector_index[self.target_to_detector[ot]]
+                for ot in self.ordered_object_types
+            }
+
+        observation_space = self._get_observation_space()
+
+        super().__init__(**prepare_locals_for_super(locals()))
+
+    def _get_observation_space(self):
+        if self.target_to_detector_map is None:
+            return gym.spaces.Discrete(len(self.ordered_object_types))
+        else:
+            return gym.spaces.Discrete(len(self.detector_types))
+
+    def get_observation(
+        self,
+        env: IThorEnvironment,
+        task: Optional[ObjectNaviThorGridTask],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        return self.object_type_to_ind[task.task_info["object_type"]]

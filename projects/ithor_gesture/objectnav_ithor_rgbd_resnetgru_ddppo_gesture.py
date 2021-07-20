@@ -24,7 +24,7 @@ from allenact_plugins.ithor_plugin.ithor_sensors import (
     GestureDatasetSensor,
     HumanPoseSensor,
     RGBSensorThor,
-    GoalObjectTypeThorSensor,
+    GoalObjectTypeThorGestureSensor,
 )
 from allenact_plugins.ithor_plugin.ithor_util import horizontal_to_vertical_fov
 
@@ -104,7 +104,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     SCREEN_SIZE = 224
     MAX_STEPS = 100
     
-    NUM_PROCESSES = 1
+    NUM_PROCESSES = 10
     TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
     SAMPLER_GPU_IDS = TRAIN_GPU_IDS
     VALID_GPU_IDS = [torch.cuda.device_count() - 1]
@@ -137,7 +137,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             use_normalization=True,
             uuid="depth_lowres",
         ),
-        GoalObjectTypeThorSensor(object_types=TARGET_TYPES,),
+        GoalObjectTypeThorGestureSensor(object_types=TARGET_TYPES,),
         GestureDatasetSensor(uuid="gestures"),
         HumanPoseSensor(uuid="human_poses"),
     ]
@@ -205,7 +205,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         has_rgb = any(isinstance(s, RGBSensor) for s in self.SENSORS)
         has_depth = any(isinstance(s, DepthSensor) for s in self.SENSORS)
         goal_sensor_uuid = next(
-            (s.uuid for s in self.SENSORS if isinstance(s, GoalObjectTypeThorSensor)),
+            (s.uuid for s in self.SENSORS if isinstance(s, GoalObjectTypeThorGestureSensor)),
             None,
         )
         gesture_sensor_uuid = next(
@@ -401,6 +401,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             "rewards_config": self.REWARD_CONFIG,
             "env_args": {
                 **self.env_args(),
+                # """
                 "x_display": (
                      f"0.{devices[process_ind % len(devices)]}"
                      if devices is not None
@@ -408,6 +409,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
                      and devices[process_ind % len(devices)] >= 0
                      else None
                  ),
+                # """
                 # "x_display": "1",
             },
         }
