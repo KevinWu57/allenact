@@ -584,6 +584,8 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
 
         self.num_stops: int = 0 # the number of stops
 
+        
+
         self._rewards: List[float] = []
         self._intervention: List[bool] = []
         self._distance_to_goal: List[float] = []
@@ -787,9 +789,15 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
             metrics = {
                 **metrics,
                 "success": self._success,
+                "1stop_success": 0 if self.num_stops > 1 else self._success,
+                "2stop_success": 0 if self.num_stops > 2 else self._success,
+                "3stop_success": 0 if self.num_stops > 3 else self._success,
                 "total_reward": np.sum(self._rewards),
                 "dist_to_target": dist2tget,
                 "spl": 0 if spl is None else spl,
+                "1stop_spl": 0 if spl is None or self.num_stops > 1 else spl,
+                "2stop_spl": 0 if spl is None or self.num_stops > 2 else spl,
+                "3stop_spl": 0 if spl is None or self.num_stops > 3 else spl,
                 "intervention_percentage": np.sum(self._intervention)*1.0/self.num_steps_taken(),
                 "stop_counts": self.num_stops,
             }
