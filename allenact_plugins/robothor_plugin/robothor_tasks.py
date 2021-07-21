@@ -619,6 +619,10 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
     def close(self) -> None:
         self.env.stop()
 
+    def is_done(self) -> bool:
+        """Did the agent succeed or performed the maximum number of steps."""
+        return self._success or self.reached_max_steps()
+
     def _step(self, action: Union[int, Sequence[int]]) -> RLStepResult:
         assert isinstance(action, int)
         action = cast(int, action)
