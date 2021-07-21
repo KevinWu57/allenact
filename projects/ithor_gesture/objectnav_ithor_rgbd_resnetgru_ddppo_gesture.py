@@ -146,7 +146,8 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         self.REWARD_CONFIG = {
             "step_penalty": -0.001,
             "goal_success_reward": 1.0,
-            "failed_stop_reward": 0.0,
+            "failed_stop_reward": -0.01,
+            "collision_reward": -0.005,
             "shaping_weight": 0.0,
         } # TODO Gesture add collision penalty   
         self.recording_percentage=float(kwargs["recording_percentage"])
