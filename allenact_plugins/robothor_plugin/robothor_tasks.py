@@ -743,6 +743,10 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
         elif self.num_steps_taken() + 1 >= self.max_steps:
             reward += self.reward_configs.get("reached_max_steps_reward", 0.0)
 
+        # Collision penalty
+        if not self.last_action_success:
+            reward += self.reward_configs.get("collision_reward", 0.0)
+
         self._rewards.append(float(reward))
         return float(reward)
 
