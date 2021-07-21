@@ -696,7 +696,7 @@ class ObjectGestureNavTask(Task[RoboThorEnvironment]):
         a = 180.0*math.atan2(target_pos["z"]-agent_pos["z"], target_pos["x"]-agent_pos["x"])/math.pi
         a = a if a > 0 else 360.0+a # direction between agent and target
         angle = min([360.0-abs((a-agent_rot)%360), abs((a-agent_rot)%360)])
-        return angle > 60.0
+        return angle > 90.0
 
     def shaping(self) -> float:
         rew = 0.0
