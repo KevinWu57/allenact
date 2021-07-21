@@ -116,7 +116,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     
     ADVANCE_SCENE_ROLLOUT_PERIOD = None
     
-    THOR_COMMIT_ID = "b4df6db68eee7fda65cf7430843f28bd456e51fd"
+    THOR_COMMIT_ID = "2cca88de394ff1fa3f85f9ee3585444552059da9"
     
     try:
         with open("instruction_tokens.txt", "r") as f:
