@@ -96,7 +96,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     STEP_SIZE = 0.25
     ROTATION_DEGREES = 45.0
     VISIBILITY_DISTANCE = 1.5
-    STOCHASTIC = True
+    STOCHASTIC = False
     HORIZONTAL_FIELD_OF_VIEW = 90
 
     CAMERA_WIDTH = 224
