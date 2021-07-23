@@ -561,7 +561,8 @@ class NavToPartnerTask(Task[RoboThorEnvironment]):
         }
 
 class ObjectGestureNavTask(Task[RoboThorEnvironment]):
-    _actions = (MOVE_AHEAD, ROTATE_LEFT, ROTATE_RIGHT, END, LOOK_UP, LOOK_DOWN)
+    # _actions = (MOVE_AHEAD, ROTATE_LEFT, ROTATE_RIGHT, END, LOOK_UP, LOOK_DOWN)
+    _actions = (MOVE_AHEAD, ROTATE_LEFT, ROTATE_RIGHT, END)
 
     def __init__(
         self,
