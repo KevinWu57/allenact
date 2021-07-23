@@ -51,7 +51,7 @@ class RoboThorEnvironment:
         if "agentCount" in kwargs:
             assert kwargs["agentCount"] > 0
 
-        recursive_update(self.config, {**kwargs, "agentMode": "locobot"})
+        recursive_update(self.config, {**kwargs, "agentMode": "default"})
         self.controller = Controller(**self.config,)
         self.all_metadata_available = all_metadata_available
 
