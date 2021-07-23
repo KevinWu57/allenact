@@ -18,7 +18,7 @@ from allenact.base_abstractions.sensor import RGBSensor, DepthSensor, SensorSuit
 from allenact.base_abstractions.task import TaskSampler
 
 from allenact_plugins.robothor_plugin.robothor_sensors import DepthSensorThor
-from allenact_plugins.robothor_plugin.robothor_tasks import ObjectNavTask
+from allenact_plugins.robothor_plugin.robothor_tasks import ObjectGestureNavTask
 from allenact_plugins.robothor_plugin.robothor_task_samplers import ObjectGestureNavDatasetTaskSampler
 from allenact_plugins.ithor_plugin.ithor_sensors import (
     GestureDatasetSensor,
@@ -224,18 +224,28 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         
 
         return ResnetTensorObjectGestureNavActorCritic(
-            action_space=gym.spaces.Discrete(len(ObjectNavTask.class_action_names())),
-            observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
-            goal_sensor_uuid=goal_sensor_uuid,
-            gesture_sensor_uuid=gesture_sensor_uuid,
-            human_pose_uuid=human_pose_uuid,
-            rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
-            depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
-            hidden_size=512,
-            goal_dims=32,
-            gesture_compressor_hidden_out_dim=32,
-            human_pose_hidden_out_dim=32,
-        )
+                action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
+                observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
+                goal_sensor_uuid=goal_sensor_uuid,
+                gesture_sensor_uuid=gesture_sensor_uuid,
+                human_pose_uuid=human_pose_uuid,
+                rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
+                depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
+                hidden_size=512,
+                goal_dims=32,
+                gesture_compressor_hidden_out_dim=32,
+                human_pose_hidden_out_dim=32,
+            )
+        else:
+            return ResnetTensorObjectNavActorCritic(
+                action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
+                observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
+                goal_sensor_uuid=goal_sensor_uuid,
+                rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
+                depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
+                hidden_size=512,
+                goal_dims=32,
+            )
         
     @classmethod
     def env_args(cls):
@@ -395,7 +405,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
                 if (include_expert_sensor or not isinstance(s, ExpertActionSensor))
             ],
             "action_space": gym.spaces.Discrete(
-                len(ObjectNavTask.class_action_names())
+                len(ObjectGestureNavTask.class_action_names())
             ),
             "seed": seeds[process_ind] if seeds is not None else None,
             "deterministic_cudnn": deterministic_cudnn,
