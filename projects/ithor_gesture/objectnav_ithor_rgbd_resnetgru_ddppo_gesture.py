@@ -25,12 +25,16 @@ from allenact_plugins.ithor_plugin.ithor_sensors import (
     HumanPoseSensor,
     RGBSensorThor,
     GoalObjectTypeThorGestureSensor,
+    RelativePositionTHORSensor,
 )
 from allenact_plugins.ithor_plugin.ithor_util import horizontal_to_vertical_fov
 
 from projects.objectnav_baselines.experiments.ithor.objectnav_ithor_base import ObjectNaviThorBaseConfig
 from projects.objectnav_baselines.experiments.robothor.objectnav_robothor_base import ObjectNavRoboThorBaseConfig
-from projects.objectnav_baselines.models.object_nav_models import ResnetTensorObjectGestureNavActorCritic
+from projects.objectnav_baselines.models.object_nav_models import (
+    ResnetTensorObjectGestureNavActorCritic,
+    ResnetTensorObjectNavActorCritic,
+)
 
 from allenact.algorithms.onpolicy_sync.losses import PPO
 from allenact.algorithms.onpolicy_sync.losses.ppo import PPOConfig
