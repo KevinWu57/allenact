@@ -1194,7 +1194,7 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         return output
     
     @classmethod
-    def load_intervention_gestures(cls, base_dir: str) -> list(np.ndarray):
+    def load_intervention_gestures(cls, base_dir: str) -> list:
         motion_files = glob.glob('/'.join([base_dir, "*.csv"]))
         output = []
         for file_path in motion_files:
