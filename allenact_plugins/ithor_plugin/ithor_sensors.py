@@ -722,4 +722,4 @@ class GoalObjectTypeThorGestureSensor(Sensor):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        return self.object_type_to_ind[task.task_info["target_type"]]
+        return self.object_type_to_ind[task.task_info["object_type"]]
