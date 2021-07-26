@@ -723,3 +723,63 @@ class GoalObjectTypeThorGestureSensor(Sensor):
         **kwargs: Any,
     ) -> Any:
         return self.object_type_to_ind[task.task_info["object_type"]]
+    
+class RelativePositionTHORSensor(
+    Sensor[RoboThorEnvironment, Task[RoboThorEnvironment]]
+):
+    def __init__(self, uuid: str = "rel_position", **kwargs: Any):
+        observation_space = gym.spaces.Box(
+                    low=np.array([-np.inf, -np.inf, -360], dtype=np.float32),
+                    high=np.array([-np.inf, -np.inf, 360], dtype=np.float32),
+                    shape=(3,),
+                    dtype=np.float32,
+                )
+        super().__init__(**prepare_locals_for_super(locals()))
+
+    @staticmethod
+    def get_relative_position_change(from_xzr: np.ndarray, to_xzr: np.ndarray):
+        dx_dz_dr = to_xzr - from_xzr
+
+        # Transform dx, dz (in global coordinates) into the relative coordinates
+        # given by rotation r0=from_xzr[-2]. This requires rotating everything so that
+        # r0 is facing in the positive z direction. Since thor rotations are negative
+        # the usual rotation direction this means we want to rotate by r0 degrees.
+        theta = np.pi * from_xzr[-1] / 180
+        cos_theta = np.cos(theta)
+        sin_theta = np.sin(theta)
+
+        dx_dz_dr = (
+            np.array(
+                [
+                    [cos_theta, -sin_theta, 0],
+                    [sin_theta, cos_theta, 0],
+                    [0, 0, 1],  # Don't change dr
+                ]
+            )
+            @ dx_dz_dr.reshape(-1, 1)
+        ).reshape(-1)
+
+        dx_dz_dr[-1] = dx_dz_dr[-1] % 360
+        return dx_dz_dr
+
+    def get_observation(
+        self,
+        env: RoboThorEnvironment,
+        task: Optional[Task[RoboThorEnvironment]],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+
+        p = task.task_info["initial_position"]
+        r = task.task_info["initial_orientation"]
+        self.initial_xzr = np.array([p["x"], p["z"], r % 360])
+
+        p = env.controller.last_event.metadata["agent"]["position"]
+        r = env.controller.last_event.metadata["agent"]["rotation"]["y"]
+        current_xzr = np.array([p["x"], p["z"], r % 360])
+
+        dx_dz_dr = self.get_relative_position_change(
+            from_xzr=self.initial_xzr, to_xzr=current_xzr
+        )
+
+        return dx_dz_dr
