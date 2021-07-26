@@ -238,8 +238,8 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             if isinstance(s, GestureDatasetSensor):
                 s.add_intervention = self.add_intervention
         
-
-        return ResnetTensorObjectGestureNavActorCritic(
+        if self.use_gesture:
+            return ResnetTensorObjectGestureNavActorCritic(
                 action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
                 observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
                 goal_sensor_uuid=goal_sensor_uuid,
