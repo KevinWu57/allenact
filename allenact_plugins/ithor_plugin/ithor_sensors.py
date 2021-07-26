@@ -632,7 +632,7 @@ class GestureDatasetSensor(Sensor):
             a = a if a > 0 else 360.0+a # direction between agent and target
             angle = min([360.0-abs((a-agent_rot)%360), abs((a-agent_rot)%360)])
             if angle > 60.0: # add intervention here
-                return np.ones(shape=(100, 95))
+                return task.task_info["intervention_gestures"]
         
         return task.task_info["motion_loaded"]
         

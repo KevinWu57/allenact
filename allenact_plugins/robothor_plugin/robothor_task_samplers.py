@@ -1143,6 +1143,9 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         self.predicted_motions = ObjectGestureNavDatasetTaskSampler.load_motions(
             base_dir='/'.join([self.scene_directory, "predictions"])
         )
+        self.intervention_gestures = ObjectGestureNavDatasetTaskSampler.load_intervention_gestures(
+            base_dir='/'.join([self.scene_directory, "intervention_gestures"])
+        )
         
         self.episodes = {
             scene: self.load_dataset(
@@ -1190,6 +1193,14 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
             output[file_name] = np.genfromtxt(file_path, dtype="float", delimiter=";", skip_header=1)
         return output
     
+    @classmethod
+    def load_intervention_gestures(cls, base_dir: str) -> list(np.ndarray):
+        motion_files = glob.glob('/'.join([base_dir, "*.csv"]))
+        output = []
+        for file_path in motion_files:
+            output.append(np.genfromtxt(file_path, dtype="float", delimiter=";", skip_header=1))
+        return output
+    
     def _create_environment(self) -> RoboThorEnvironment:
         env = self.env_class(**self.env_args)
         return env
@@ -1213,11 +1224,13 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         for m in data_recorded:
             m["motion_path"] = m["motion"].split('/')[-1] if m["motion"].endswith(".csv") else m["motion"].split('/')[-1]+".csv"
             m["motion_loaded"] = self.recorded_motions[m["motion_path"]]
+            m["intervention_gestures"] = random.choice(self.intervention_gestures)
         
         data_predicted = data[:int(len(data)*prediction_percentage)]
         for m in data_predicted:
             m["motion_path"] = (m["motion"].split('/')[-1].split('.')[0] if m["motion"].endswith(".csv") else m["motion"].split('/')[-1]) + f"_prediction.csv"
             m["motion_loaded"] = self.predicted_motions[m["motion_path"]]
+            m["intervention_gestures"] = random.choice(self.intervention_gestures)
         
         return data_recorded + data_predicted
 
@@ -1336,6 +1349,7 @@ class ObjectGestureNavDatasetTaskSampler(TaskSampler):
         # task_info["motion_recorded"] = self.recorded_motions[task_info["motion_recorded_name"]]
         # task_info["motion_predicted"] = self.predicted_motions[task_info["motion_predicted_name"]]
         task_info["motion_loaded"] = episode["motion_loaded"]
+        task_info["intervention_gestures"] = episode["intervention_gestures"]
         
         if self.allow_flipping and random.random() > 0.5:
             task_info["mirrored"] = True

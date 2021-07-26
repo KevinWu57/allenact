@@ -933,6 +933,7 @@ class OnPolicyRunner(object):
                                             # del task["task_info"]["motion_recorded"]
                                             # del task["task_info"]["motion_predicted"]
                                             del task["task_info"]["motion_loaded"]
+                                            del task["task_info"]["intervention_gestures"]
                                     collected = collected[nworkers:]
                                     with open(metrics_file, "w") as f:
                                         json.dump(
