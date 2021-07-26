@@ -167,6 +167,10 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         self.add_intervention=bool(kwargs["add_intervention"])
         self.smoothed=bool(kwargs["smoothed"])
         self.room_type=str(kwargs["room_type"])
+        self.use_gesture=bool(kwargs["use_gesture"])
+
+        if not self.use_gesture:
+            self.SENSORS =  self.SENSORS[:3]
 
 
     @classmethod
