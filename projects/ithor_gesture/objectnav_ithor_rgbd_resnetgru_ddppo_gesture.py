@@ -150,6 +150,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             uuid="depth_lowres",
         ),
         GoalObjectTypeThorGestureSensor(object_types=TARGET_TYPES,),
+        RelativePositionTHORSensor(uuid="rel_position"),
         GestureDatasetSensor(uuid="gestures"),
         HumanPoseSensor(uuid="human_poses"),
     ]
@@ -170,7 +171,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         self.use_gesture=bool(kwargs["use_gesture"])
 
         if not self.use_gesture:
-            self.SENSORS =  self.SENSORS[:3]
+            self.SENSORS =  self.SENSORS[:4]
 
 
     @classmethod
@@ -225,6 +226,10 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             (s.uuid for s in self.SENSORS if isinstance(s, GoalObjectTypeThorGestureSensor)),
             None,
         )
+        rel_position_uuid = next(
+            (s.uuid for s in self.SENSORS if isinstance(s, RelativePositionTHORSensor)),
+            None,
+        )
         gesture_sensor_uuid = next(
             (s.uuid for s in self.SENSORS if isinstance(s, GestureDatasetSensor)),
             None,
@@ -243,6 +248,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
                 action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
                 observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
                 goal_sensor_uuid=goal_sensor_uuid,
+                rel_position_uuid=rel_position_uuid,
                 gesture_sensor_uuid=gesture_sensor_uuid,
                 human_pose_uuid=human_pose_uuid,
                 rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
