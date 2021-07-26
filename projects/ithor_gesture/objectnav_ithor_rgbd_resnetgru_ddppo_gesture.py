@@ -118,11 +118,11 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     
     THOR_COMMIT_ID = "bad5bc2b250615cb766ffb45d455c211329af17e"
     
-    try:
-        with open("instruction_tokens.txt", "r") as f:
-            INSTRUCTION_TOKENS = tuple(sorted(map(lambda a:a.strip('\n'), f.readlines())))
-    except:
-        raise Exception("Cannot read instruction tokens from the loaded text file.")
+    # try:
+    #     with open("instruction_tokens.txt", "r") as f:
+    #         INSTRUCTION_TOKENS = tuple(sorted(map(lambda a:a.strip('\n'), f.readlines())))
+    # except:
+    #     raise Exception("Cannot read instruction tokens from the loaded text file.")
 
     SENSORS = [
         RGBSensorThor(
