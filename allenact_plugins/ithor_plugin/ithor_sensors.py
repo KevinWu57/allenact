@@ -638,7 +638,7 @@ class GestureDatasetSensor(Sensor):
         
 class HumanPoseSensor(Sensor):
     """
-    Get the human pose (x, y, z, orientation)
+    Get the human pose (x, z, orientation)
     """
     
     def __init__(
@@ -655,7 +655,7 @@ class HumanPoseSensor(Sensor):
         return gym.spaces.Box(
             low=-1.0, 
             high=1.0, 
-            shape=(4,),
+            shape=(3,),
             dtype=np.float32
         )
     
@@ -668,7 +668,8 @@ class HumanPoseSensor(Sensor):
     ) -> np.ndarray:
         
         # Get the human position of the current episode
-        human_pose = np.array(list(map(lambda x:x/10.0, task.task_info["human_position"].values())) + [task.task_info["human_rotation"]], dtype=np.float32)
+        human_position = list(map(lambda x:x/10.0, task.task_info["human_position"].values()))
+        human_pose = np.array([human_position[0], human_position[2]] + [task.task_info["human_rotation"]], dtype=np.float32)
         return human_pose
 
 class GoalObjectTypeThorGestureSensor(Sensor):
