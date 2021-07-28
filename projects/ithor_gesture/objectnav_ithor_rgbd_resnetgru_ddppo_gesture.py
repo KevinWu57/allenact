@@ -110,7 +110,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
     )
     
     STEP_SIZE = 0.25
-    ROTATION_DEGREES = 45.0
+    ROTATION_DEGREES = 15.0
     VISIBILITY_DISTANCE = 1.5
     STOCHASTIC = False
     HORIZONTAL_FIELD_OF_VIEW = 90
@@ -154,7 +154,7 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             uuid="depth_lowres",
         ),
         GoalObjectTypeThorGestureSensor(object_types=TARGET_TYPES,),
-        RelativePositionTHORSensor(uuid="rel_position"),
+        # RelativePositionTHORSensor(uuid="rel_position"),
         GestureDatasetSensor(uuid="gestures"),
         HumanPoseSensor(uuid="human_poses"),
     ]
@@ -173,9 +173,10 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         self.smoothed=bool(kwargs["smoothed"])
         self.room_type=str(kwargs["room_type"])
         self.use_gesture=bool(kwargs["use_gesture"])
+        self.random=bool(kwargs["random"]) if "random" in kwargs else False
 
-        if not self.use_gesture:
-            self.SENSORS =  self.SENSORS[:4]
+        # if not self.use_gesture:
+        #     self.SENSORS =  self.SENSORS[:4]
 
 
     @classmethod
@@ -230,10 +231,10 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             (s.uuid for s in self.SENSORS if isinstance(s, GoalObjectTypeThorGestureSensor)),
             None,
         )
-        rel_position_uuid = next(
-            (s.uuid for s in self.SENSORS if isinstance(s, RelativePositionTHORSensor)),
-            None,
-        )
+        # rel_position_uuid = next(
+        #     (s.uuid for s in self.SENSORS if isinstance(s, RelativePositionTHORSensor)),
+        #     None,
+        # )
         gesture_sensor_uuid = next(
             (s.uuid for s in self.SENSORS if isinstance(s, GestureDatasetSensor)),
             None,
@@ -246,32 +247,37 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
         for s in self.SENSORS:
             if isinstance(s, GestureDatasetSensor):
                 s.add_intervention = self.add_intervention
+                s.use_gesture = self.use_gesture
+
+        for s in self.SENSORS:
+            if isinstance(s, HumanPoseSensor):
+                s.use_gesture = self.use_gesture
         
-        if self.use_gesture:
-            return ResnetTensorObjectGestureNavActorCritic(
-                action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
-                observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
-                goal_sensor_uuid=goal_sensor_uuid,
-                rel_position_uuid=rel_position_uuid,
-                gesture_sensor_uuid=gesture_sensor_uuid,
-                human_pose_uuid=human_pose_uuid,
-                rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
-                depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
-                hidden_size=512,
-                goal_dims=32,
-                gesture_compressor_hidden_out_dim=32,
-                human_pose_hidden_out_dim=32,
+        # if self.use_gesture:
+        return ResnetTensorObjectGestureNavActorCritic(
+            action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
+            observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
+            goal_sensor_uuid=goal_sensor_uuid,
+            # rel_position_uuid=rel_position_uuid,
+            gesture_sensor_uuid=gesture_sensor_uuid,
+            human_pose_uuid=human_pose_uuid,
+            rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
+            depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
+            hidden_size=512,
+            goal_dims=32,
+            gesture_compressor_hidden_out_dim=32,
+            human_pose_hidden_out_dim=32,
             )
-        else:
-            return ResnetTensorObjectNavActorCritic(
-                action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
-                observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
-                goal_sensor_uuid=goal_sensor_uuid,
-                rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
-                depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
-                hidden_size=512,
-                goal_dims=32,
-            )
+        # else:
+        #     return ResnetTensorObjectNavActorCritic(
+        #         action_space=gym.spaces.Discrete(len(ObjectGestureNavTask.class_action_names())),
+        #         observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
+        #         goal_sensor_uuid=goal_sensor_uuid,
+        #         rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
+        #         depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
+        #         hidden_size=512,
+        #         goal_dims=32,
+        #     )
         
     @classmethod
     def env_args(cls):
