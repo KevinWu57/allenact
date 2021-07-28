@@ -544,7 +544,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
         self,
         observation_spaces: SpaceDict,
         goal_sensor_uuid: str,
-        rel_position_uuid: str,
+        # rel_position_uuid: str,
         gesture_sensor_uuid: str,
         human_pose_uuid: str,
         rgb_resnet_preprocessor_uuid: str,
@@ -557,7 +557,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
     ) -> None:
         super().__init__()
         self.goal_uuid = goal_sensor_uuid
-        self.rel_position_uuid = rel_position_uuid
+        # self.rel_position_uuid = rel_position_uuid
         self.gesture_uuid = gesture_sensor_uuid
         self.human_pose_uuid = human_pose_uuid
         self.rgb_resnet_uuid = rgb_resnet_preprocessor_uuid
@@ -612,7 +612,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
             
             self.rgb_target_gesture_obs_combiner = nn.Sequential(
                 nn.Conv2d(
-                    self.resnet_hid_out_dims[1] + self.class_dims + self.gesture_hid_out_dim + 2*self.human_pose_hid_out_dim,
+                    self.resnet_hid_out_dims[1] + self.class_dims + self.gesture_hid_out_dim + self.human_pose_hid_out_dim,
                     self.combine_hid_out_dims[0],
                     1,
                 ),
@@ -621,7 +621,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
             )
             self.depth_target_gesture_obs_combiner = nn.Sequential(
                 nn.Conv2d(
-                    self.resnet_hid_out_dims[1] + self.class_dims + self.gesture_hid_out_dim + 2*self.human_pose_hid_out_dim,
+                    self.resnet_hid_out_dims[1] + self.class_dims + self.gesture_hid_out_dim + self.human_pose_hid_out_dim,
                     self.combine_hid_out_dims[0],
                     1,
                 ),
@@ -653,19 +653,19 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
             nn.Flatten(),
             nn.Linear(
                 in_features=self.gesture_tensor_shape[0]*self.gesture_tensor_shape[1],
-                out_features=self.gesture_hid_out_dim*4,
-            ), 
-            nn.Linear(
-                in_features=self.gesture_hid_out_dim*4,
                 out_features=self.gesture_hid_out_dim,
-            ),          
+            ), 
+            # nn.Linear(
+            #     in_features=self.gesture_hid_out_dim*4,
+            #     out_features=self.gesture_hid_out_dim,
+            # ),          
         )
         self.human_pose_shape = observation_spaces.spaces[self.human_pose_uuid].shape
         self.human_pose_compressor = nn.Linear(
             in_features=self.human_pose_shape[0],
             out_features=self.human_pose_hid_out_dim,
         )
-        self.rel_position_shape = observation_spaces.spaces[self.rel_position_uuid].shape
+        # self.rel_position_shape = observation_spaces.spaces[self.rel_position_uuid].shape
 
     @property
     def is_blind(self):
@@ -765,7 +765,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
         observations[self.goal_uuid] = observations[self.goal_uuid].view(-1, 1)
         observations[self.gesture_uuid] = observations[self.gesture_uuid].view(-1, self.gesture_tensor_shape[0], self.gesture_tensor_shape[1])
         observations[self.human_pose_uuid] = observations[self.human_pose_uuid].view(-1, self.human_pose_shape[0])
-        observations[self.rel_position_uuid] = observations[self.rel_position_uuid].view(-1, self.rel_position_shape[0])
+        # observations[self.rel_position_uuid] = observations[self.rel_position_uuid].view(-1, self.rel_position_shape[0])
 
         return observations, use_agent, nstep, nsampler, nagent
 
@@ -785,7 +785,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
         rgb_embs = [
             self.compress_rgb_resnet(observations),
             self.distribute_target(observations),
-            self.distribute_rel_position(observations),
+            # self.distribute_rel_position(observations),
             self.distribute_gesture(observations),
             self.distribute_human_pose(observations),
         ]
@@ -793,7 +793,7 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
         depth_embs = [
             self.compress_depth_resnet(observations),
             self.distribute_target(observations),
-            self.distribute_rel_position(observations),
+            # self.distribute_rel_position(observations),
             self.distribute_gesture(observations),
             self.distribute_human_pose(observations),
         ]
@@ -810,7 +810,7 @@ class ResnetTensorObjectGestureNavActorCritic(ActorCriticModel[CategoricalDistr]
         action_space: gym.spaces.Discrete,
         observation_space: SpaceDict,
         goal_sensor_uuid: str,
-        rel_position_uuid: str,
+        # rel_position_uuid: str,
         gesture_sensor_uuid: Optional[str],
         human_pose_uuid: Optional[str],
         rgb_resnet_preprocessor_uuid: Optional[str],
@@ -851,7 +851,7 @@ class ResnetTensorObjectGestureNavActorCritic(ActorCriticModel[CategoricalDistr]
             self.goal_visual_encoder = ResnetDualTensorGoalGestureEncoder(  # type:ignore
                 self.observation_space,
                 goal_sensor_uuid,
-                rel_position_uuid,
+                # rel_position_uuid,
                 gesture_sensor_uuid,
                 human_pose_uuid,
                 rgb_resnet_preprocessor_uuid,
