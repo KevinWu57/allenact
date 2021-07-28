@@ -605,9 +605,11 @@ class GestureDatasetSensor(Sensor):
         self,
         uuid: str = "gestures",
         add_intervention: bool = False,
+        use_gesture: bool = True,
         **kwargs: Any
     ):  
         self.add_intervention = add_intervention
+        self.use_gesture = use_gesture
         
         observation_space = self._get_observation_space()
         
@@ -634,7 +636,10 @@ class GestureDatasetSensor(Sensor):
             if angle > 60.0: # add intervention here
                 return task.task_info["intervention_gestures"]
         
-        return task.task_info["motion_loaded"]
+        if self.use_gesture:
+            return task.task_info["motion_loaded"]
+
+        return np.zeros(shape=(100, 95))
         
 class HumanPoseSensor(Sensor):
     """
@@ -644,8 +649,11 @@ class HumanPoseSensor(Sensor):
     def __init__(
         self,
         uuid: str = "human_poses",
+        use_gesture: bool = True,
         **kwargs: Any
     ):  
+        self.use_gesture = use_gesture
+
         observation_space = self._get_observation_space()
         
         super().__init__(**prepare_locals_for_super(locals()))
@@ -666,11 +674,13 @@ class HumanPoseSensor(Sensor):
         *args: Any,
         **kwargs: Any
     ) -> np.ndarray:
-        
-        # Get the human position of the current episode
-        human_position = list(map(lambda x:x/10.0, task.task_info["human_position"].values()))
-        human_pose = np.array([human_position[0], human_position[2]] + [task.task_info["human_rotation"]], dtype=np.float32)
-        return human_pose
+        if self.use_gesture:
+            # Get the human position of the current episode
+            human_position = list(map(lambda x:x/10.0, task.task_info["human_position"].values()))
+            human_pose = np.array([human_position[0], human_position[2]] + [task.task_info["human_rotation"]/360.0], dtype=np.float32)
+            return human_pose
+
+        return np.zeros(shape=(3,))
 
 class GoalObjectTypeThorGestureSensor(Sensor):
     def __init__(
