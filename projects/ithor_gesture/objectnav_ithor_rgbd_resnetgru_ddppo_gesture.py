@@ -264,9 +264,9 @@ class ObjectNavRoboThorRGBPPOGestureExperimentConfig(ExperimentConfig, ABC):
             rgb_resnet_preprocessor_uuid="rgb_resnet" if has_rgb else None,
             depth_resnet_preprocessor_uuid="depth_resnet" if has_depth else None,
             hidden_size=512,
-            goal_dims=32,
-            gesture_compressor_hidden_out_dim=32,
-            human_pose_hidden_out_dim=32,
+            goal_dims=512,
+            gesture_compressor_hidden_out_dim=512,
+            human_pose_hidden_out_dim=512,
             )
         # else:
         #     return ResnetTensorObjectNavActorCritic(
