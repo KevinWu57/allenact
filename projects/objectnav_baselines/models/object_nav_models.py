@@ -549,9 +549,9 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
         human_pose_uuid: str,
         rgb_resnet_preprocessor_uuid: str,
         depth_resnet_preprocessor_uuid: str,
-        class_dims: int = 32,
-        gesture_compressor_hidden_out_dim: int = 32,
-        human_pose_hidden_out_dim: int = 32, 
+        class_dims: int = 512,
+        gesture_compressor_hidden_out_dim: int = 512,
+        human_pose_hidden_out_dim: int = 512, 
         resnet_compressor_hidden_out_dims: Tuple[int, int] = (128, 32),
         combiner_hidden_out_dims: Tuple[int, int] = (128, 32),
     ) -> None:
@@ -584,11 +584,17 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(*self.resnet_hid_out_dims[0:2], 1),
                 nn.ReLU(),
+                nn.Flatten(),
+                nn.Linear(self.resnet_tensor_shape[1]*self.resnet_tensor_shape[2]*self.resnet_hid_out_dims[-1], 512),
+                nn.ReLU(),
             )
             self.depth_resnet_compressor = nn.Sequential(
                 nn.Conv2d(self.resnet_tensor_shape[0], self.resnet_hid_out_dims[0], 1),
                 nn.ReLU(),
                 nn.Conv2d(*self.resnet_hid_out_dims[0:2], 1),
+                nn.ReLU(),
+                nn.Flatten(),
+                nn.Linear(self.resnet_tensor_shape[1]*self.resnet_tensor_shape[2]*self.resnet_hid_out_dims[-1], 512),
                 nn.ReLU(),
             )
             self.rgb_target_obs_combiner = nn.Sequential(
@@ -655,15 +661,19 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
                 in_features=self.gesture_tensor_shape[0]*self.gesture_tensor_shape[1],
                 out_features=self.gesture_hid_out_dim,
             ), 
+            nn.ReLU(),
             # nn.Linear(
             #     in_features=self.gesture_hid_out_dim*4,
             #     out_features=self.gesture_hid_out_dim,
             # ),          
         )
         self.human_pose_shape = observation_spaces.spaces[self.human_pose_uuid].shape
-        self.human_pose_compressor = nn.Linear(
+        self.human_pose_compressor = nn.Sequential(
+            nn.Linear(
             in_features=self.human_pose_shape[0],
             out_features=self.human_pose_hid_out_dim,
+            ),
+            nn.ReLU(),
         )
         # self.rel_position_shape = observation_spaces.spaces[self.rel_position_uuid].shape
 
@@ -677,10 +687,11 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
             return self.class_dims
         else:
             return (
-                2
-                * self.combine_hid_out_dims[-1]
-                * self.resnet_tensor_shape[1]
-                * self.resnet_tensor_shape[2]
+                # 2
+                # * self.combine_hid_out_dims[-1]
+                # * self.resnet_tensor_shape[1]
+                # * self.resnet_tensor_shape[2]
+                2*512 + self.class_dims + self.gesture_hid_out_dim + self.human_pose_hid_out_dim
             )
 
     def get_object_type_encoding(
@@ -782,24 +793,32 @@ class ResnetDualTensorGoalGestureEncoder(nn.Module):
 
         if self.blind:
             return self.embed_class(observations[self.goal_uuid])
-        rgb_embs = [
-            self.compress_rgb_resnet(observations),
-            self.distribute_target(observations),
-            # self.distribute_rel_position(observations),
-            self.distribute_gesture(observations),
-            self.distribute_human_pose(observations),
-        ]
-        rgb_x = self.rgb_target_gesture_obs_combiner(torch.cat(rgb_embs, dim=1,))
-        depth_embs = [
-            self.compress_depth_resnet(observations),
-            self.distribute_target(observations),
-            # self.distribute_rel_position(observations),
-            self.distribute_gesture(observations),
-            self.distribute_human_pose(observations),
-        ]
-        depth_x = self.depth_target_gesture_obs_combiner(torch.cat(depth_embs, dim=1,))
+        #rgb_embs = [
+        #    self.compress_rgb_resnet(observations),
+        #    self.distribute_target(observations),
+        #    # self.distribute_rel_position(observations),
+        #    self.distribute_gesture(observations),
+        #    self.distribute_human_pose(observations),
+        #]
+        # rgb_x = self.rgb_target_gesture_obs_combiner(torch.cat(rgb_embs, dim=1,))
+        rgb_x = self.compress_rgb_resnet(observations)
+        #depth_embs = [
+        #    self.compress_depth_resnet(observations),
+        #    self.distribute_target(observations),
+        #    # self.distribute_rel_position(observations),
+        #    self.distribute_gesture(observations),
+        #    self.distribute_human_pose(observations),
+        #]
+        #depth_x = self.depth_target_gesture_obs_combiner(torch.cat(depth_embs, dim=1,))
+        depth_x = self.compress_depth_resnet(observations)
         
-        x = torch.cat([rgb_x, depth_x], dim=1)
+        target_x = torch.squeeze(self.get_object_type_encoding(observations), 1)
+
+        gesture_motion_x = self.compress_gesture(observations)
+
+        gesture_pose_x = self.compress_human_pose(observations)
+
+        x = torch.cat([rgb_x, depth_x, target_x, gesture_motion_x, gesture_pose_x], dim=1)
         x = x.reshape(x.size(0), -1)  # flatten 
 
         return self.adapt_output(x, use_agent, nstep, nsampler, nagent)
