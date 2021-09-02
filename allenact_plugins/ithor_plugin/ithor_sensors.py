@@ -21,7 +21,7 @@ from allenact_plugins.ithor_plugin.ithor_environment import IThorEnvironment
 from allenact_plugins.ithor_plugin.ithor_tasks import ObjectNaviThorGridTask
 from allenact_plugins.ithor_plugin.ithor_util import include_object_data
 from allenact_plugins.robothor_plugin.robothor_environment import RoboThorEnvironment
-from allenact_plugins.robothor_plugin.robothor_tasks import PointNavTask, ObjectNavTask
+from allenact_plugins.robothor_plugin.robothor_tasks import PointNavTask, ObjectNavTask, ObjectGestureNavTask
 
 
 class RGBSensorThor(
@@ -622,7 +622,7 @@ class GestureDatasetSensor(Sensor):
     def get_observation(
         self,
         env: IThorEnvironment,
-        task: Optional[ObjectNaviThorGridTask],
+        task: Optional[ObjectGestureNavTask],
         *args: Any,
         **kwargs: Any
     ) -> np.ndarray:
@@ -633,7 +633,8 @@ class GestureDatasetSensor(Sensor):
             a = 180.0*math.atan2(target_pos["z"]-agent_pos["z"], target_pos["x"]-agent_pos["x"])/math.pi
             a = a if a > 0 else 360.0+a # direction between agent and target
             angle = min([360.0-abs((a-agent_rot)%360), abs((a-agent_rot)%360)])
-            if angle > 60.0: # add intervention here
+            if angle > 90.0: # add intervention here
+            # if not task._is_goal_in_range():
                 return task.task_info["intervention_gestures"]
         
         if self.use_gesture:
